@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Hop.Core.Base;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Services
 {
     public class IlBasedIdExtractorService : IIdExtractorService
     {

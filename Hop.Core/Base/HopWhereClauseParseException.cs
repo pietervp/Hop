@@ -1,7 +1,7 @@
 using System;
 using System.Data.SqlClient;
 
-namespace Hop.Core
+namespace Hop.Core.Base
 {
     public class HopWhereClauseParseException : Exception
     {

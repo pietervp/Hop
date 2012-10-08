@@ -4,8 +4,9 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Services
 {
     public class SubOptimalMaterializerService : IMaterializerService
     {

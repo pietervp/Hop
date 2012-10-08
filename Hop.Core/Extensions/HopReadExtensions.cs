@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using Hop.Core.Base;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Extensions
 {
     public static class HopReadExtensions
     {

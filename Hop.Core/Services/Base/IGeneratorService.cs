@@ -1,4 +1,4 @@
-namespace Hop.Core
+namespace Hop.Core.Services.Base
 {
     public interface IGeneratorService
     {

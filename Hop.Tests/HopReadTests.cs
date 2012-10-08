@@ -6,6 +6,10 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using Hop.Core;
+using Hop.Core.Base;
+using Hop.Core.Extensions;
+using Hop.Core.Services;
+using Hop.Core.Services.Base;
 using Hop.TestConsole;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

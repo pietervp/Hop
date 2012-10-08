@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Hop.Core;
+using Hop.Core.Base;
+using Hop.Core.Services;
 
 namespace Hop.TestConsole
 {

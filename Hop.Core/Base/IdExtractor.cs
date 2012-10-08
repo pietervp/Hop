@@ -1,4 +1,4 @@
-namespace Hop.Core
+namespace Hop.Core.Base
 {
     public abstract class IdExtractor<T> : IdExtractor
     {

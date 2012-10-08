@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Services
 {
     public class IlBasedMaterializerService : IMaterializerService
     {

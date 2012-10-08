@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Hop.Core
+namespace Hop.Core.Services.Base
 {
     public interface IIdExtractorService
     {

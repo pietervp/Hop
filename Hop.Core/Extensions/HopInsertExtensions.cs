@@ -2,18 +2,23 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using Hop.Core.Base;
+using Hop.Core.Services;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Extensions
 {
     public static class HopInsertExtensions
     {
-        public static void InsertSingle<T>(this IHop hopper, T instance)
+        public static void InsertSingle<T>(this IHop hopper, T instance) where T : new()
         {
             hopper.Insert(new[] {instance});
         }
 
-        public static void Insert<T>(this IHop hopper, IEnumerable<T> instances)
+        public static void Insert<T>(this IHop hopper, IEnumerable<T> instances) where T : new()
         {
+            SchemaVerifierService.AddTypeToCache<T>(hopper.Connection);
+
             IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
 
             IEnumerable<PropertyInfo> propertyInfos = typeof (T).GetProperties().Where(x => x.Name != idExtractorService.GetIdField<T>());

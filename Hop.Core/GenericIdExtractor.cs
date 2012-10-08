@@ -1,3 +1,5 @@
+using Hop.Core.Base;
+
 namespace Hop.Core
 {
     public class GenericIdExtractor<T> : IdExtractor<T>

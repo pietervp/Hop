@@ -2,8 +2,10 @@ using System;
 using System.Reflection;
 using System.Reflection.Emit;
 using BLToolkit.Reflection.Emit;
+using Hop.Core.Base;
+using Hop.Core.Services.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Services
 {
     public class MsilGeneratorService : IGeneratorService
     {

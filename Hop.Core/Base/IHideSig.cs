@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 
-namespace Hop.Core
+namespace Hop.Core.Base
 {
     public interface IHideSig
     {

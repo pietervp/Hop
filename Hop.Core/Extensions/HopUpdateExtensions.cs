@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using Hop.Core.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Extensions
 {
     public static class HopUpdateExtensions
     {

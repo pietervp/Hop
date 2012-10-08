@@ -1,7 +1,8 @@
 using System;
 using System.Data;
+using Hop.Core.Base;
 
-namespace Hop.Core
+namespace Hop.Core.Extensions
 {
     public static class HopExtensions
     {

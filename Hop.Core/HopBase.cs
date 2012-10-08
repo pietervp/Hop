@@ -1,5 +1,8 @@
 using System;
 using System.Data;
+using Hop.Core.Base;
+using Hop.Core.Services;
+using Hop.Core.Services.Base;
 
 namespace Hop.Core
 {
