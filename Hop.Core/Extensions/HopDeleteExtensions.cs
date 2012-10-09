@@ -26,7 +26,7 @@ namespace Hop.Core.Extensions
             if (instances == null)
                 throw new ArgumentNullException("instances", "Please provide a non null value for parameter instances");
 
-            string tableName = HopBase.GetTypeToTableNameService()(typeof (T));
+            string tableName = HopBase.GetTypeToTableNameService(typeof (T));
             IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
             string idField = idExtractorService.GetIdField<T>();
             string inClause = idExtractorService.GetIds<T, int>(instances).Select(x => x.ToString(CultureInfo.InvariantCulture)).Aggregate((id1, id2) => id1 + ", " + id2);
@@ -38,7 +38,7 @@ namespace Hop.Core.Extensions
         {
             using (IDbCommand dbCommand = hopper.Connection.CreateCommand())
             {
-                tableName = string.IsNullOrWhiteSpace(tableName) ? HopBase.GetTypeToTableNameService()(typeof (T)) : tableName;
+                tableName = string.IsNullOrWhiteSpace(tableName) ? HopBase.GetTypeToTableNameService(typeof (T)) : tableName;
 
                 string cmdText = string.Format("DELETE FROM {0}", tableName);
 

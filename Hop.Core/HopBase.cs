@@ -12,7 +12,7 @@ namespace Hop.Core
         public static Func<IGeneratorService> GetGeneratorService;
         public static Func<IIdExtractorService> GetIdExtractorService;
         public static Func<IMaterializerService> GetMaterializerService;
-        public static Func<Func<Type, string>> GetTypeToTableNameService;
+        public static Func<Type, string> GetTypeToTableNameService;
 
         public static Func<Type, PropertyInfo> GetIdPropertyService;
 
@@ -23,8 +23,8 @@ namespace Hop.Core
             GetMaterializerService = () => new IlBasedMaterializerService();
 
             //define default services
-            GetTypeToTableNameService = () => type => type.Name;
-            GetIdPropertyService = type => type.GetProperty("Id");
+            GetTypeToTableNameService = type => TypeCache.Get(type).TableName;
+            GetIdPropertyService = type => TypeCache.Get(type).IdProperty;
         }
 
         public HopBase(IDbConnection connection)

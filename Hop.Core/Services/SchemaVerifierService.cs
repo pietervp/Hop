@@ -24,7 +24,7 @@ namespace Hop.Core.Services
             if (sqlConnection == null)
                 return;
 
-            string tableName = HopBase.GetTypeToTableNameService()(typeof (T));
+            string tableName = HopBase.GetTypeToTableNameService(typeof (T));
 
             SqlCommand sqlCommand = sqlConnection.CreateCommand();
             sqlCommand.CommandText = string.Format(@"select column_name,ordinal_position from information_schema.columns where table_name = '{0}' order by ordinal_position", tableName);
@@ -32,7 +32,7 @@ namespace Hop.Core.Services
             List<Tuple<string, int>> columns = connection.Hop().ReadTuples<Tuple<string, int>, T>("column_name, ordinal_position", "table_name = 'Beer'", "information_schema.columns").ToList();
 
             var sb = new StringBuilder();
-            sb.Append(string.Format("ALTER TABLE  {0} ", HopBase.GetTypeToTableNameService()(typeof (T))));
+            sb.Append(string.Format("ALTER TABLE  {0} ", HopBase.GetTypeToTableNameService(typeof (T))));
 
             List<PropertyInfo> propertyInfos = typeof (T).GetProperties().Where(x => !columns.Any(y => y.Item1 == x.Name)).ToList();
 

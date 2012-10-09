@@ -32,7 +32,7 @@ namespace Hop.Core.Extensions
 
                 foreach (T inst in instanceList)
                 {
-                    sb.AppendLine(string.Format("UPDATE {0} SET ", HopBase.GetTypeToTableNameService()(typeof (T))));
+                    sb.AppendLine(string.Format("UPDATE {0} SET ", HopBase.GetTypeToTableNameService(typeof (T))));
 
                     sb.AppendLine(
                         TypeCache.Get<T>().PropertiesWithoutId
@@ -71,7 +71,7 @@ namespace Hop.Core.Extensions
             using (IDbCommand dbCommand = hopper.Connection.CreateCommand())
             {
                 where = string.IsNullOrWhiteSpace(where) ? " 1 = 1" : where;
-                dbCommand.CommandText = string.Format("UPDATE {0} SET {1} WHERE {2}", HopBase.GetTypeToTableNameService()(typeof (T)), setClause, where);
+                dbCommand.CommandText = string.Format("UPDATE {0} SET {1} WHERE {2}", HopBase.GetTypeToTableNameService(typeof (T)), setClause, where);
 
                 dbCommand.Connection.Open();
                 dbCommand.ExecuteNonQuery();

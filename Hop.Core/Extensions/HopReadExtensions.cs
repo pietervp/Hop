@@ -112,7 +112,7 @@ namespace Hop.Core.Extensions
 
         private static string SelectFrom<T>(string columnsToSelect = "*", string fromTable = null) where T : new()
         {
-            string tableName = HopBase.GetTypeToTableNameService()(typeof (T));
+            string tableName = HopBase.GetTypeToTableNameService(typeof (T));
             return string.Format("SELECT {1} FROM {0} ", fromTable ?? tableName, columnsToSelect);
         }
     }

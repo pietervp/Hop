@@ -9,11 +9,16 @@ namespace Hop.Core.Base
 
         public static TypeCacheEntry Get<T>()
         {
-            if (_cache.ContainsKey(typeof (T)))
-                return _cache[typeof (T)];
+            return Get(typeof(T));
+        }
 
-            var typeCacheEntry = new TypeCacheEntry(typeof (T));
-            _cache.Add(typeof (T), typeCacheEntry);
+        public static TypeCacheEntry Get(Type type)
+        {
+            if (_cache.ContainsKey(type))
+                return _cache[type];
+
+            var typeCacheEntry = new TypeCacheEntry(type);
+            _cache.Add(type, typeCacheEntry);
             return typeCacheEntry;
         }
     }
