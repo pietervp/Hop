@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using Hop.Core.Base;
 using Hop.Core.Services;
-using Hop.Core.Services.Base;
 
 namespace Hop.Core.Extensions
 {
@@ -27,10 +26,9 @@ namespace Hop.Core.Extensions
 
             SchemaVerifierService.AddTypeToCache<T>(hopper.Connection);
 
-            var idField = HopBase.GetIdExtractorService().GetIdField<T>();
-            var propertyInfos = typeof (T).GetProperties().Where(x => x.Name != idField);
-            var objects = instances.Select(insertion => propertyInfos.Select(prop => prop.GetValue(insertion, null)).Select(x => x == null ? "NULL" : x is string ? string.Format("'{0}'", x) : x.ToString()).Aggregate((field1, field2) => field1 + ", " + field2));
-            var lastId = hopper.Insert<T>(string.Format("{0} ({1})",typeof (T).Name,propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), objects.Select(x=> "(" + x + ")").Aggregate((obj1, obj2) =>  obj1 + ", " + obj2));
+            IEnumerable<PropertyInfo> propertyInfos = TypeCache.Get<T>().PropertiesWithoutId;
+            IEnumerable<string> objects = instances.Select(insertion => propertyInfos.Select(prop => prop.GetValue(insertion, null)).Select(x => x == null ? "NULL" : x is string ? string.Format("'{0}'", x) : x.ToString()).Aggregate((field1, field2) => field1 + ", " + field2));
+            int lastId = hopper.Insert<T>(string.Format("{0} ({1})", typeof (T).Name, propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), objects.Select(x => "(" + x + ")").Aggregate((obj1, obj2) => obj1 + ", " + obj2));
 
             foreach (T source in instances.Reverse())
             {
@@ -40,7 +38,7 @@ namespace Hop.Core.Extensions
 
         public static int Insert<T>(this IHop hopper, string intoClause = "", string insertClause = "")
         {
-            using (var dbCommand = hopper.Connection.CreateCommand())
+            using (IDbCommand dbCommand = hopper.Connection.CreateCommand())
             {
                 dbCommand.CommandText = string.Format("INSERT INTO {0} VALUES {1}; SELECT @@IDENTITY AS 'Identity'", intoClause, insertClause);
 
@@ -50,28 +48,17 @@ namespace Hop.Core.Extensions
 
                 try
                 {
-                    lastId = (int)(decimal)dbCommand.ExecuteScalar();
+                    lastId = (int) (decimal) dbCommand.ExecuteScalar();
                 }
-                catch(SqlException exception)
+                catch (SqlException exception)
                 {
-                    throw new HopInsertClauseParseException(exception){InsertClause = dbCommand.CommandText};
+                    throw new HopInsertClauseParseException(exception) {InsertClause = dbCommand.CommandText};
                 }
 
                 hopper.Connection.Close();
 
                 return lastId;
             }
-        }
-    }
-
-    public class HopInsertClauseParseException : Exception
-    {
-        public SqlException SqlException { get; set; }
-        public string InsertClause { get; set; }
-
-        public HopInsertClauseParseException(SqlException exception)
-        {
-            SqlException = exception;
         }
     }
 }

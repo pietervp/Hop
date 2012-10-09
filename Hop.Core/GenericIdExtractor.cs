@@ -1,3 +1,4 @@
+using System.Reflection;
 using Hop.Core.Base;
 
 namespace Hop.Core
@@ -8,7 +9,12 @@ namespace Hop.Core
 
         public override object GetId(T instance)
         {
-            return instance.GetType().GetProperty("Id").GetValue(instance, null);
+            return GetKeyProperty().GetValue(instance, null);
+        }
+
+        private PropertyInfo GetKeyProperty()
+        {
+            return TypeCache.Get<T>().IdProperty;
         }
 
         #endregion

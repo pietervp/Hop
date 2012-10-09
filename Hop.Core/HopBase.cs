@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Reflection;
 using Hop.Core.Base;
 using Hop.Core.Services;
 using Hop.Core.Services.Base;
@@ -13,6 +14,8 @@ namespace Hop.Core
         public static Func<IMaterializerService> GetMaterializerService;
         public static Func<Func<Type, string>> GetTypeToTableNameService;
 
+        public static Func<Type, PropertyInfo> GetIdPropertyService;
+
         static HopBase()
         {
             GetGeneratorService = () => new MsilGeneratorService();
@@ -21,6 +24,7 @@ namespace Hop.Core
 
             //define default services
             GetTypeToTableNameService = () => type => type.Name;
+            GetIdPropertyService = type => type.GetProperty("Id");
         }
 
         public HopBase(IDbConnection connection)

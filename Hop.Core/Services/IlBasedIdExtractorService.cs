@@ -41,7 +41,7 @@ namespace Hop.Core.Services
         {
             return "Id";
         }
-        
+
         public T SetId<T>(T source, object id)
         {
             source.GetType().GetProperty("Id").SetValue(source, id, null);
@@ -51,7 +51,7 @@ namespace Hop.Core.Services
 
         public object GetId<T>(T instance)
         {
-            return GetIds<T, object>(new T[] { instance }).FirstOrDefault();
+            return GetIds<T, object>(new[] {instance}).FirstOrDefault();
         }
 
         #endregion

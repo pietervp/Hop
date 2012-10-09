@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hop.Core.Base;
 using Hop.Core.Extensions;
 using Hop.TestConsole;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

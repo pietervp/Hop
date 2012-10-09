@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using Hop.Core.Base;
 using Hop.Core.Services.Base;
 
@@ -13,16 +14,16 @@ namespace Hop.Core.Extensions
     {
         public static IEnumerable<T> ReadTuples<T, TEntity>(this IHop hop, string columnSelectQuery, string whereQuery = null, string fromTable = null) where T : class, IStructuralEquatable, IStructuralComparable, IComparable where TEntity : new()
         {
-            var selectFrom = SelectFrom<TEntity>(columnSelectQuery, fromTable);
+            string selectFrom = SelectFrom<TEntity>(columnSelectQuery, fromTable);
 
-            var dbCommand = hop.Connection.CreateCommand();
+            IDbCommand dbCommand = hop.Connection.CreateCommand();
             dbCommand.CommandText = selectFrom + " WHERE " + (whereQuery ?? "1=1");
             dbCommand.Connection.Open();
 
-            var genericArguments = typeof(T).GetGenericArguments();
-            var firstOrDefault = typeof(Tuple).GetMethods().Where(x => x.GetGenericArguments().Count() == genericArguments.Count()).FirstOrDefault().MakeGenericMethod(genericArguments);
+            Type[] genericArguments = typeof (T).GetGenericArguments();
+            MethodInfo firstOrDefault = typeof (Tuple).GetMethods().Where(x => x.GetGenericArguments().Count() == genericArguments.Count()).FirstOrDefault().MakeGenericMethod(genericArguments);
 
-            using (var executeReader = dbCommand.ExecuteReader(CommandBehavior.CloseConnection))
+            using (IDataReader executeReader = dbCommand.ExecuteReader(CommandBehavior.CloseConnection))
             {
                 while (executeReader.Read())
                 {
@@ -54,27 +55,27 @@ namespace Hop.Core.Extensions
             if (instances == null)
                 throw new ArgumentNullException("instances", "Read extension method expects an array of instances to read");
 
-            var listInstances = instances as List<T> ?? instances.ToList();
+            List<T> listInstances = instances as List<T> ?? instances.ToList();
 
             if (!listInstances.Any())
                 return Enumerable.Empty<T>();
 
-            var idExtractorService = HopBase.GetIdExtractorService();
+            IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
 
-            var ids = idExtractorService.GetIds(listInstances).Select((x, i) =>
+            IEnumerable<SqlParameter> ids = idExtractorService.GetIds(listInstances).Select((x, i) =>
                 {
                     if (HopBase.GetDefault(x.GetType()).Equals(x))
                         throw new HopReadWithoutKeyException(listInstances[i]);
                     return new SqlParameter(string.Format("@param{0}", i), x);
                 });
 
-            var idField = idExtractorService.GetIdField<T>();
+            string idField = idExtractorService.GetIdField<T>();
             var command = new SqlCommand();
 
-            var whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
-            var selectFrom = SelectFrom<T>();
+            string whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
+            string selectFrom = SelectFrom<T>();
 
-            var cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
+            string cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
 
             command.CommandText = cmdText;
             command.Parameters.AddRange(ids.ToArray());
@@ -111,28 +112,8 @@ namespace Hop.Core.Extensions
 
         private static string SelectFrom<T>(string columnsToSelect = "*", string fromTable = null) where T : new()
         {
-            var tableName = HopBase.GetTypeToTableNameService()(typeof(T));
+            string tableName = HopBase.GetTypeToTableNameService()(typeof (T));
             return string.Format("SELECT {1} FROM {0} ", fromTable ?? tableName, columnsToSelect);
-        }
-    }
-
-    public class HopReadWithoutKeyException : Exception
-    {
-        public object Target { get; set; }
-
-        public HopReadWithoutKeyException(object target)
-        {
-            Target = target;
-        }
-    }
-
-    public class HopUpdateWithoutKeyException : Exception
-    {
-        public object Target { get; set; }
-
-        public HopUpdateWithoutKeyException(object target)
-        {
-            Target = target;
         }
     }
 }
