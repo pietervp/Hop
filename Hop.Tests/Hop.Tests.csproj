@@ -59,6 +59,8 @@
     <Compile Include="BaseHopTest.cs" />
     <Compile Include="HopDeleteTests.cs" />
     <Compile Include="HopInsertTests.cs" />
+    <Compile Include="HopTests.cs" />
+    <Compile Include="HopUpdateTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="HopReadTests.cs" />
   </ItemGroup>

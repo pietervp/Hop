@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using Hop.Core.Base;
@@ -11,6 +12,11 @@ namespace Hop.Core.Extensions
         public static void DeleteSingle<T>(this IHop hopper, T instance)
         {
             hopper.Delete(new[] {instance});
+        }
+
+        public static void Delete<T>(this IHop hopper, T instance)
+        {
+            Delete<T>(hopper, new[] { instance });
         }
 
         public static void Delete<T>(this IHop hopper, ICollection<T> instances)
@@ -40,7 +46,15 @@ namespace Hop.Core.Extensions
                 dbCommand.CommandText = cmdText;
 
                 dbCommand.Connection.Open();
-                dbCommand.ExecuteNonQuery();
+                try
+                {
+                    dbCommand.ExecuteNonQuery();    
+                }
+                catch(SqlException sqlException)
+                {
+                    throw new HopWhereClauseParseException(dbCommand.CommandText, sqlException);
+                }
+                
                 dbCommand.Connection.Close();
             }
         }

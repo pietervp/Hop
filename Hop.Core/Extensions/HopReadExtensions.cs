@@ -106,7 +106,7 @@ namespace Hop.Core.Extensions
             command.Connection = hopper.Connection;
             command.Connection.Open();
 
-            return HopBase.GetMaterializerService().ReadObjects<T>(command.ExecuteReader(CommandBehavior.CloseConnection));
+            return HopBase.GetMaterializerService().ReadObjects<T>(command.ExecuteReader(CommandBehavior.CloseConnection)).ToList();
         }
 
         private static string SelectFrom<T>(string columnsToSelect = "*", string fromTable = null) where T : new()
@@ -121,6 +121,16 @@ namespace Hop.Core.Extensions
         public object Target { get; set; }
 
         public HopReadWithoutKeyException(object target)
+        {
+            Target = target;
+        }
+    }
+
+    public class HopUpdateWithoutKeyException : Exception
+    {
+        public object Target { get; set; }
+
+        public HopUpdateWithoutKeyException(object target)
         {
             Target = target;
         }

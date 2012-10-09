@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Hop.Core.Base;
 using Hop.Core.Services.Base;
 
@@ -46,6 +47,11 @@ namespace Hop.Core.Services
             source.GetType().GetProperty("Id").SetValue(source, id, null);
 
             return source;
+        }
+
+        public object GetId<T>(T instance)
+        {
+            return GetIds<T, object>(new T[] { instance }).FirstOrDefault();
         }
 
         #endregion

@@ -8,10 +8,7 @@ namespace Hop.Core.Services
     public class IlBasedMaterializerService : IMaterializerService
     {
         private static readonly Dictionary<Type, Materializer> TypeMaterializerCache = new Dictionary<Type, Materializer>();
-
         private readonly MsilGeneratorService _msilGeneratorService = new MsilGeneratorService();
-
-        #region IMaterializerService Members
 
         public IEnumerable<T> ReadObjects<T>(IDataReader dataReader) where T : new()
         {
@@ -20,15 +17,16 @@ namespace Hop.Core.Services
 
             var materializer = (TypeMaterializerCache[typeof (T)] as Materializer<T>);
 
-            if (materializer != null)
-            {
-                materializer.PrepareDataReader(dataReader);
+            if (materializer == null) 
+                yield break;
 
+            materializer.PrepareDataReader(dataReader);
+
+            using (dataReader)
+            {
                 while (dataReader.Read())
                     yield return materializer.GetObject(dataReader);
             }
         }
-
-        #endregion
     }
 }

@@ -8,5 +8,6 @@ namespace Hop.Core.Services.Base
         IEnumerable<U> GetIds<T, U>(IEnumerable<T> instances);
         string GetIdField<T>();
         T SetId<T>(T source, object id);
+        object GetId<T>(T instance);
     }
 }
