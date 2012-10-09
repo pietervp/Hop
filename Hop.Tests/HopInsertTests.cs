@@ -16,7 +16,7 @@ namespace Hop.Tests
 
             GetSqlConnection().Hop().Insert(newBeers);
 
-            var lastTwoInsertedBeers = GetSqlConnection().Hop().Read<Beer>("Name = One ORDER BY ID Desc").Take(2);
+            var lastTwoInsertedBeers = GetSqlConnection().Hop().Read<Beer>("Name = 'One' ORDER BY ID Desc").Take(2).ToList();
 
             Assert.AreEqual(lastTwoInsertedBeers.Count(), 2);
             Assert.IsNotNull(lastTwoInsertedBeers.FirstOrDefault());

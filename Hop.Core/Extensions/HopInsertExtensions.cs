@@ -24,7 +24,14 @@ namespace Hop.Core.Extensions
             IEnumerable<PropertyInfo> propertyInfos = typeof (T).GetProperties().Where(x => x.Name != idExtractorService.GetIdField<T>());
             IEnumerable<T> insertCollecion = instances;
             IEnumerable<string> objects = insertCollecion.Select(insertion => propertyInfos.Select(prop => prop.GetValue(insertion, null)).Select(x => x == null ? "NULL" : x is string ? string.Format("'{0}'", x) : x.ToString()).Aggregate((field1, field2) => field1 + ", " + field2));
-            int lastId = hopper.Insert<T>(string.Format("{0} ({1})", typeof (T).Name, propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), string.Format("{0}", objects.Aggregate((obj1, obj2) => "(" + obj1 + "), (" + obj2 + ")")));
+            int lastId = hopper.Insert<T>(
+                string.Format(
+                "{0} ({1})",
+                typeof (T).Name,
+                propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), 
+                objects
+                .Select(x=> "(" + x + ")")
+                .Aggregate((obj1, obj2) =>  obj1 + ", " + obj2));
 
             foreach (T source in insertCollecion.Reverse())
             {
