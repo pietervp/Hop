@@ -39,20 +39,11 @@ namespace Hop.Core.Services
                 foreach (var filler in selectedColumnNamesInOrder)
                 {
                     object value = dataReader.GetValue(filler.OrindalIndex);
-                    filler.PropertyInfo.SetValue(newObject, value is DBNull ? GetDefault(filler.PropertyInfo.PropertyType) : value, null);
+                    filler.PropertyInfo.SetValue(newObject, value is DBNull ? HopBase.GetDefault(filler.PropertyInfo.PropertyType) : value, null);
                 }
 
                 yield return newObject;
             }
-        }
-
-        public static object GetDefault(Type type)
-        {
-            if (type.IsValueType)
-            {
-                return Activator.CreateInstance(type);
-            }
-            return null;
         }
     }
 }

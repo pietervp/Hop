@@ -33,5 +33,14 @@ namespace Hop.Core
         public IDbConnection Connection { get; set; }
 
         #endregion
+
+        public static object GetDefault(Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+            return null;
+        }
     }
 }

@@ -54,20 +54,27 @@ namespace Hop.Core.Extensions
             if (instances == null)
                 throw new ArgumentNullException("instances", "Read extension method expects an array of instances to read");
 
-            if (!instances.Any())
+            var listInstances = instances as List<T> ?? instances.ToList();
+
+            if (!listInstances.Any())
                 return Enumerable.Empty<T>();
 
-            IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
+            var idExtractorService = HopBase.GetIdExtractorService();
 
-            IEnumerable<SqlParameter> ids = idExtractorService.GetIds(instances).Select((x, i) => new SqlParameter(string.Format("@param{0}", i), x));
-            string idField = idExtractorService.GetIdField<T>();
+            var ids = idExtractorService.GetIds(listInstances).Select((x, i) =>
+                {
+                    if (HopBase.GetDefault(x.GetType()).Equals(x))
+                        throw new HopReadWithoutKeyException(listInstances[i]);
+                    return new SqlParameter(string.Format("@param{0}", i), x);
+                });
 
+            var idField = idExtractorService.GetIdField<T>();
             var command = new SqlCommand();
 
-            string whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
-            string selectFrom = SelectFrom<T>();
+            var whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
+            var selectFrom = SelectFrom<T>();
 
-            string cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
+            var cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
 
             command.CommandText = cmdText;
             command.Parameters.AddRange(ids.ToArray());
@@ -106,6 +113,16 @@ namespace Hop.Core.Extensions
         {
             var tableName = HopBase.GetTypeToTableNameService()(typeof(T));
             return string.Format("SELECT {1} FROM {0} ", fromTable ?? tableName, columnsToSelect);
+        }
+    }
+
+    public class HopReadWithoutKeyException : Exception
+    {
+        public object Target { get; set; }
+
+        public HopReadWithoutKeyException(object target)
+        {
+            Target = target;
         }
     }
 }

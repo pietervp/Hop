@@ -18,6 +18,12 @@ namespace Hop.Tests
     [TestClass]
     public class HopReadTests : BaseHopTest
     {
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            GetSqlConnection().Hop().Insert(new[] { new Beer() { Name = "Pieter" } });
+        }
+
         [TestMethod]
         public void ReadMultipleTupleWithTopClause()
         {
@@ -64,11 +70,11 @@ namespace Hop.Tests
         [TestMethod]
         public void ReadSingleTupleWithWhereClauseShouldWork()
         {
-            var readTuple = GetSqlConnection().Hop().ReadTupleSingle<Tuple<int, string>, Beer>("Id, Name", "Id = 1");
+            var readTuple = GetSqlConnection().Hop().ReadTupleSingle<Tuple<int, string>, Beer>("Id, Name", "Name = 'Pieter'");
 
             Assert.IsNotNull(readTuple);
             Assert.IsNotNull(readTuple.Item1, readTuple.Item2);
-            Assert.AreEqual(1, readTuple.Item1);
+            Assert.AreEqual("Pieter", readTuple.Item2);
         }
 
         [ExpectedException(typeof(ArgumentNullException))]
@@ -220,34 +226,46 @@ namespace Hop.Tests
                 Assert.AreNotEqual(readAll.FirstOrDefault().Id, 0);
             }
         }
-        
+
+        [ExpectedException(typeof(HopReadWithoutKeyException))]
+        [TestMethod]
+        public void TestHopReadAsRefreshSingleExtensionMethodShouldThrowIfKeyWasNotPresent()
+        {
+            var readSingle = GetSqlConnection().Hop().ReadSingle(new Beer() {Name = "Pieter"});
+
+            Assert.IsNull(readSingle);
+        }
+
         [TestMethod]
         public void TestHopReadAsRefreshSingleExtensionMethod()
         {
+            var beer = GetSqlConnection().Hop().Read<Beer>("Name = 'Pieter'").FirstOrDefault();
+
             for (int i = 0; i < 10; i++)
             {
                 var startNew = Stopwatch.StartNew();
-                var beer = GetSqlConnection().Hop().ReadSingle(new Beer() { Id = 15 });
+                beer = GetSqlConnection().Hop().ReadSingle(beer);
                 Debug.WriteLine(startNew.ElapsedMilliseconds);
 
                 Assert.IsNotNull(beer);
                 Assert.IsNotNull(beer.Id);
                 Assert.IsNotNull(beer.Name);
-                Assert.AreEqual(beer.Id, 15);
+                Assert.AreEqual("Pieter" ,beer.Name);
             }
         }
+
         [TestMethod]
         public void TestHopReadSingleExtensionMethod()
         {
             for (int i = 0; i < 10; i++)
             {
                 var startNew = Stopwatch.StartNew();
-                var beer = GetSqlConnection().Hop().ReadSingle<Beer>("Id = 15");
+                var beer = GetSqlConnection().Hop().ReadSingle<Beer>("Name = 'Pieter'");
                 Debug.WriteLine(startNew.ElapsedMilliseconds);
 
                 Assert.IsNotNull(beer);
                 Assert.IsNotNull(beer.Id);
-                Assert.AreEqual(beer.Id, 15);
+                Assert.AreEqual("Pieter", beer.Name);
             }
         }
 

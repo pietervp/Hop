@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using Hop.Core.Base;
@@ -15,44 +17,61 @@ namespace Hop.Core.Extensions
             hopper.Insert(new[] {instance});
         }
 
-        public static void Insert<T>(this IHop hopper, IEnumerable<T> instances) where T : new()
+        public static void Insert<T>(this IHop hopper, ICollection<T> instances) where T : new()
         {
+            if (instances == null)
+                throw new ArgumentNullException("instances", "Please provide a non null value to parameter instances");
+
+            if (!instances.Any())
+                return;
+
             SchemaVerifierService.AddTypeToCache<T>(hopper.Connection);
 
-            IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
+            var idField = HopBase.GetIdExtractorService().GetIdField<T>();
+            var propertyInfos = typeof (T).GetProperties().Where(x => x.Name != idField);
+            var objects = instances.Select(insertion => propertyInfos.Select(prop => prop.GetValue(insertion, null)).Select(x => x == null ? "NULL" : x is string ? string.Format("'{0}'", x) : x.ToString()).Aggregate((field1, field2) => field1 + ", " + field2));
+            var lastId = hopper.Insert<T>(string.Format("{0} ({1})",typeof (T).Name,propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), objects.Select(x=> "(" + x + ")").Aggregate((obj1, obj2) =>  obj1 + ", " + obj2));
 
-            IEnumerable<PropertyInfo> propertyInfos = typeof (T).GetProperties().Where(x => x.Name != idExtractorService.GetIdField<T>());
-            IEnumerable<T> insertCollecion = instances;
-            IEnumerable<string> objects = insertCollecion.Select(insertion => propertyInfos.Select(prop => prop.GetValue(insertion, null)).Select(x => x == null ? "NULL" : x is string ? string.Format("'{0}'", x) : x.ToString()).Aggregate((field1, field2) => field1 + ", " + field2));
-            int lastId = hopper.Insert<T>(
-                string.Format(
-                "{0} ({1})",
-                typeof (T).Name,
-                propertyInfos.Select(x => x.Name).Aggregate((field1, field2) => field1 + ", " + field2)), 
-                objects
-                .Select(x=> "(" + x + ")")
-                .Aggregate((obj1, obj2) =>  obj1 + ", " + obj2));
-
-            foreach (T source in insertCollecion.Reverse())
+            foreach (T source in instances.Reverse())
             {
-                idExtractorService.SetId(source, lastId--);
+                HopBase.GetIdExtractorService().SetId(source, lastId--);
             }
         }
 
         public static int Insert<T>(this IHop hopper, string intoClause = "", string insertClause = "")
         {
-            using (IDbCommand dbCommand = hopper.Connection.CreateCommand())
+            using (var dbCommand = hopper.Connection.CreateCommand())
             {
                 dbCommand.CommandText = string.Format("INSERT INTO {0} VALUES {1}; SELECT @@IDENTITY AS 'Identity'", intoClause, insertClause);
 
                 hopper.Connection.Open();
 
-                var lastId = (int) (decimal) dbCommand.ExecuteScalar();
+                int lastId;
+
+                try
+                {
+                    lastId = (int)(decimal)dbCommand.ExecuteScalar();
+                }
+                catch(SqlException exception)
+                {
+                    throw new HopInsertClauseParseException(exception){InsertClause = dbCommand.CommandText};
+                }
 
                 hopper.Connection.Close();
 
                 return lastId;
             }
+        }
+    }
+
+    public class HopInsertClauseParseException : Exception
+    {
+        public SqlException SqlException { get; set; }
+        public string InsertClause { get; set; }
+
+        public HopInsertClauseParseException(SqlException exception)
+        {
+            SqlException = exception;
         }
     }
 }

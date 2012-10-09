@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Hop.Core;
 using Hop.Core.Extensions;
@@ -9,6 +10,46 @@ namespace Hop.Tests
     [TestClass]
     public class HopInsertTests : BaseHopTest
     {
+        [ExpectedException(typeof(ArgumentNullException))]
+        [TestMethod]
+        public void InsertNullReferenceShouldThrowException()
+        {
+            GetSqlConnection().Hop().Insert<Beer>(null);
+        }
+
+        [TestMethod]
+        public void InsertEmptyArrayShouldNotReportIssues()
+        {
+            GetSqlConnection().Hop().Insert(Enumerable.Empty<Beer>().ToList());
+        }
+
+        [ExpectedException(typeof(HopInsertClauseParseException))]
+        [TestMethod]
+        public void InsertWithFaultySqlStatementShouldResultInException()
+        {
+            GetSqlConnection().Hop().Insert<Beer>(insertClause: "Hello World");
+        }
+
+        [TestMethod]
+        public void InsertWithFaultySqlStatementShouldProvideEnoughErrorInfo()
+        {
+            HopInsertClauseParseException exception = null;
+
+            try
+            {
+                GetSqlConnection().Hop().Insert<Beer>(insertClause: "Hello World");
+            }
+            catch (HopInsertClauseParseException ex)
+            {
+                exception = ex;   
+            }
+
+            Assert.IsNotNull(exception);
+            Assert.IsNotNull(exception.SqlException);
+            Assert.IsNotNull(exception.InsertClause);
+            Assert.AreNotEqual(string.Empty, exception.InsertClause);
+        }
+
         [TestMethod]
         public void InsertMultipleInstancesShouldResultInCorrectIdAllocation()
         {
