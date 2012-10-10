@@ -14,12 +14,10 @@ namespace Hop.Core.Base
 
         public static TypeCacheEntry Get(Type type)
         {
-            if (_cache.ContainsKey(type))
-                return _cache[type];
+            if (!_cache.ContainsKey(type))
+                _cache.Add(type, new TypeCacheEntry(type));
 
-            var typeCacheEntry = new TypeCacheEntry(type);
-            _cache.Add(type, typeCacheEntry);
-            return typeCacheEntry;
+            return _cache[type];
         }
     }
 }
