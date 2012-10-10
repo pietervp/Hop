@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Hop.Core.Base;
 using Hop.Core.Extensions;
