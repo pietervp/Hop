@@ -3,6 +3,9 @@
 Hop works as an extension to IDbConnection. It propagates as one extension method 'Hop()' which returns an IHop instance.
 The IHop interface in it's turn has basic CRUD extension methods defined. This approach keeps the 'true' IDbConnection members clean, and separates all the extensions to an external helper class.
 
+### Dynamic Schema creation ###
+Hop will dynamically create tables/columns when it is possible/needed. This only works for value typed columns (except System.String). Hop will try to infer a primary key by searching for a property named Id, or a property decorated with IdAttribute. All the beheviour in this matter can be modified by overriding the service-methods in HopBase.
+
 ### Read ###
 
 The basic usage of the Read extension methods is as follows:
