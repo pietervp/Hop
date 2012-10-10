@@ -68,7 +68,7 @@ namespace Hop.Core.Extensions
         {
             SchemaVerifierService.AddTypeToCache<T>(hopper.Connection);
 
-            using (IDbCommand dbCommand = hopper.Connection.CreateCommand())
+            using (var dbCommand = hopper.Connection.CreateCommand())
             {
                 where = string.IsNullOrWhiteSpace(where) ? " 1 = 1" : where;
                 dbCommand.CommandText = string.Format("UPDATE {0} SET {1} WHERE {2}", HopBase.GetTypeToTableNameService(typeof (T)), setClause, where);

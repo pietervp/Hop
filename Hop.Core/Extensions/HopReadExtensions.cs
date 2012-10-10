@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using Hop.Core.Base;
+using Hop.Core.PrivateExtensions;
 using Hop.Core.Services.Base;
 
 namespace Hop.Core.Extensions
@@ -14,20 +15,36 @@ namespace Hop.Core.Extensions
     {
         public static IEnumerable<T> ReadTuples<T, TEntity>(this IHop hop, string columnSelectQuery, string whereQuery = null, string fromTable = null) where T : class, IStructuralEquatable, IStructuralComparable, IComparable where TEntity : new()
         {
-            string selectFrom = SelectFrom<TEntity>(columnSelectQuery, fromTable);
+            var selectFrom = SelectFrom<TEntity>(columnSelectQuery, fromTable);
 
-            IDbCommand dbCommand = hop.Connection.CreateCommand();
-            dbCommand.CommandText = selectFrom + " WHERE " + (whereQuery ?? "1=1");
-            dbCommand.Connection.Open();
-
-            Type[] genericArguments = typeof (T).GetGenericArguments();
-            MethodInfo firstOrDefault = typeof (Tuple).GetMethods().Where(x => x.GetGenericArguments().Count() == genericArguments.Count()).FirstOrDefault().MakeGenericMethod(genericArguments);
-
-            using (IDataReader executeReader = dbCommand.ExecuteReader(CommandBehavior.CloseConnection))
+            using (var dbCommand = hop.Connection.CreateCommand())
             {
-                while (executeReader.Read())
+                dbCommand.CommandText = selectFrom + " WHERE " + (whereQuery ?? "1=1");
+                dbCommand.Connection.Open();
+
+                var genericArguments = typeof (T).GetGenericArguments();
+                var openGenericTupleCreator = 
+                    typeof (Tuple)
+                    .GetMethods()
+                    .FirstOrDefault(x => x.GetGenericArguments().Count() == genericArguments.Count());
+                
+                if (openGenericTupleCreator == null) 
+                    yield break;
+
+                var tupleCreationFactory =openGenericTupleCreator.MakeGenericMethod(genericArguments);
+
+                using (var executeReader = dbCommand.ExecuteReader(CommandBehavior.CloseConnection))
                 {
-                    yield return firstOrDefault.Invoke(null, (Enumerable.Range(0, genericArguments.Count()).Select(x => executeReader.Get(genericArguments[x], x)).ToArray())) as T;
+                    while (executeReader.Read())
+                    {
+                        var factoryParameters = 
+                            Enumerable
+                            .Range(0, genericArguments.Count())
+                            .Select(x => executeReader.Get(genericArguments[x], x))
+                            .ToArray();
+
+                        yield return tupleCreationFactory.Invoke(null, factoryParameters) as T;
+                    }
                 }
             }
         }
@@ -55,32 +72,34 @@ namespace Hop.Core.Extensions
             if (instances == null)
                 throw new ArgumentNullException("instances", "Read extension method expects an array of instances to read");
 
-            List<T> listInstances = instances as List<T> ?? instances.ToList();
+            var listInstances = instances as List<T> ?? instances.ToList();
 
             if (!listInstances.Any())
                 return Enumerable.Empty<T>();
 
-            IIdExtractorService idExtractorService = HopBase.GetIdExtractorService();
+            var idExtractorService = HopBase.GetIdExtractorService();
 
-            IEnumerable<SqlParameter> ids = idExtractorService.GetIds(listInstances).Select((x, i) =>
+            var ids = idExtractorService.GetIds(listInstances).Select((x, i) =>
                 {
                     if (HopBase.GetDefault(x.GetType()).Equals(x))
                         throw new HopReadWithoutKeyException(listInstances[i]);
+
                     return new SqlParameter(string.Format("@param{0}", i), x);
-                });
+                }).ToArray();
 
-            string idField = idExtractorService.GetIdField<T>();
-            var command = new SqlCommand();
+            var idField = idExtractorService.GetIdField<T>();
+            var whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
+            var selectFrom = SelectFrom<T>();
 
-            string whereClause = ids.Select(p => p.ParameterName).Aggregate((p1, p2) => p1 + " , " + p2);
-            string selectFrom = SelectFrom<T>();
+            var cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
 
-            string cmdText = string.Format("{0} WHERE {2} IN ( {1} )", selectFrom, whereClause, idField);
+            using (var command = new SqlCommand())
+            {
+                command.CommandText = cmdText;
+                command.Parameters.AddRange(ids);
 
-            command.CommandText = cmdText;
-            command.Parameters.AddRange(ids.ToArray());
-
-            return hopper.ReadInternal<T>(command);
+                return hopper.ReadInternal<T>(command);
+            }
         }
 
         public static IEnumerable<T> Read<T>(this IHop hopper, string whereClause) where T : new()
@@ -89,7 +108,11 @@ namespace Hop.Core.Extensions
             try
             {
                 cmdText = string.Format("{0} WHERE {1}", SelectFrom<T>(), whereClause);
-                return hopper.ReadInternal<T>(new SqlCommand(cmdText));
+                
+                using (var sqlCommand = new SqlCommand(cmdText))
+                {
+                    return hopper.ReadInternal<T>(sqlCommand);
+                }
             }
             catch (SqlException sqlException)
             {
@@ -104,15 +127,19 @@ namespace Hop.Core.Extensions
 
         private static IEnumerable<T> ReadInternal<T>(this IHop hopper, IDbCommand command) where T : new()
         {
-            command.Connection = hopper.Connection;
-            command.Connection.Open();
+            using (command)
+            {
+                command.Connection = hopper.Connection;
+                command.Connection.Open();
 
-            return HopBase.GetMaterializerService().ReadObjects<T>(command.ExecuteReader(CommandBehavior.CloseConnection)).ToList();
+                return HopBase.GetMaterializerService().ReadObjects<T>(command.ExecuteReader(CommandBehavior.CloseConnection)).ToList();
+            }
         }
 
         private static string SelectFrom<T>(string columnsToSelect = "*", string fromTable = null) where T : new()
         {
-            string tableName = HopBase.GetTypeToTableNameService(typeof (T));
+            var tableName = HopBase.GetTypeToTableNameService(typeof (T));
+
             return string.Format("SELECT {1} FROM {0} ", fromTable ?? tableName, columnsToSelect);
         }
     }

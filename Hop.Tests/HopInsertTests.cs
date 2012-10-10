@@ -66,6 +66,13 @@ namespace Hop.Tests
             Assert.AreNotEqual(lastTwoInsertedBeers.FirstOrDefault().Id, 0);
         }
 
+        [ExpectedException(typeof(ArgumentNullException))]
+        [TestMethod]
+        public void InsertSingleWithNullValueShouldThrowException()
+        {
+            GetSqlConnection().Hop().InsertSingle<Beer>(null);
+        }
+
         [TestMethod]
         public void TestHopInsertSingleExtensionMethod()
         {

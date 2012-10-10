@@ -85,6 +85,13 @@ namespace Hop.Tests
             Assert.AreEqual(0, enumerable.Count());
         }
 
+        [ExpectedException(typeof(ArgumentNullException))]
+        [TestMethod]
+        public void DeleteSingleWithNullParameterShouldThrow()
+        {
+            GetSqlConnection().Hop().DeleteSingle<Beer>(null);
+        }
+
         [TestMethod]
         public void DeleteSingleObject()
         {
@@ -92,7 +99,7 @@ namespace Hop.Tests
 
             var firstOrDefault = GetSqlConnection().Hop().ReadAll<Beer>().FirstOrDefault();
 
-            GetSqlConnection().Hop().Delete(firstOrDefault);
+            GetSqlConnection().Hop().DeleteSingle(firstOrDefault);
 
             var beerFoundAfterDelete = GetSqlConnection().Hop().ReadSingle<Beer>(string.Format("Id = {0}", firstOrDefault.Id));
 

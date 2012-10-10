@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using Hop.Core.Extensions;
+using Hop.Core.PrivateExtensions;
 
 namespace Hop.Core
 {
