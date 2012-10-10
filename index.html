@@ -28,32 +28,67 @@
         </ul>
       </header>
       <section>
-        <h3>Welcome to GitHub Pages.</h3>
+        <h1>Hop</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h2>Usage</h2>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>Hop works as an extension to IDbConnection. It propagates as one extension method 'Hop()' which returns an IHop instance.
+The IHop interface in it's turn has basic CRUD extension methods defined. This approach keeps the 'true' IDbConnection members clean, and separates all the extensions to an external helper class.</p>
+
+<h3>Dynamic Schema creation</h3>
+
+<p>Hop will dynamically create tables/columns when it is possible/needed. This only works for value typed columns (except System.String). Hop will try to infer a primary key by searching for a property named Id, or a property decorated with IdAttribute. All the beheviour in this matter can be modified by overriding the service-methods in HopBase.</p>
+
+<h3>Read</h3>
+
+<p>The basic usage of the Read extension methods is as follows:</p>
+
+<pre><code>GetSqlConnection().Hop().ReadAll&lt;Beer&gt;();
+GetSqlConnection().Hop().Read&lt;Beer&gt;("Name = 'Jupiler'")
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>To refresh an existing instance (given the Id property is valid)</p>
 
-<h3>Designer Templates</h3>
+<pre><code>GetSqlConnection().Hop().Read(existingBeerInstance);
+</code></pre>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<h4>How it works</h4>
 
-<h3>Rather Drive Stick?</h3>
+<p>Hop works by generating type specific code when it comes to Materializing a DataReader instance. This means the lib generates IL opcodes that represent a class deriving from the generic Materializer class. In this way we can reduce Reflection costs for Read operations.</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<h4>Extra: Read to Tuple&lt;&gt;</h4>
 
-<h3>Authors and Contributors</h3>
+<p>In Hop, it is possible to do a read to Tuples:</p>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<pre><code>GetSqlConnection().Hop().ReadTuples&lt;Tuple&lt;int, string&gt;, Beer&gt;("Id, Name");
+</code></pre>
 
-<h3>Support or Contact</h3>
+<h3>Insert</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<pre><code>GetSqlConnection().Hop().InsertSingle(new Beer() { Name = "Petrus" });
+</code></pre>
+
+<h4>How it works</h4>
+
+<p>Inserting works by generating a SQL script which will insert the correct values to the database. In the same script the current Identity is retrieved, and the Id properties of the instances are updated to the correct value.</p>
+
+<h3>Update</h3>
+
+<p>Update method works as expected:</p>
+
+<pre><code>var beer = Beers.FirstOrDefault();
+beer.Name = "Heineken";
+
+GetSqlConnection().Hop().UpdateSingle(beer);
+</code></pre>
+
+<h3>Delete</h3>
+
+<p>So does the delete method:</p>
+
+<pre><code>//this line actually deletes all records from the beer table
+GetSqlConnection().Hop().Delete&lt;Beer&gt;();
+</code></pre>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/pietervp">pietervp</a></p>
