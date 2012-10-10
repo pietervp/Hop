@@ -13,13 +13,12 @@ namespace Hop.Core
         public static Func<IIdExtractorService> GetIdExtractorService;
         public static Func<IMaterializerService> GetMaterializerService;
         public static Func<Type, string> GetTypeToTableNameService;
-
         public static Func<Type, PropertyInfo> GetIdPropertyService;
 
         static HopBase()
         {
             GetGeneratorService = () => new MsilGeneratorService();
-            GetIdExtractorService = () => new IlBasedIdExtractorService();
+            GetIdExtractorService = () => new ReflectionBasedIdExtractorService();
             GetMaterializerService = () => new IlBasedMaterializerService();
 
             //define default services
@@ -32,19 +31,11 @@ namespace Hop.Core
             Connection = connection;
         }
 
-        #region IHop Members
-
         public IDbConnection Connection { get; set; }
-
-        #endregion
-
+        
         public static object GetDefault(Type type)
         {
-            if (type.IsValueType)
-            {
-                return Activator.CreateInstance(type);
-            }
-            return null;
+            return type.IsValueType ? Activator.CreateInstance(type) : null;
         }
     }
 }

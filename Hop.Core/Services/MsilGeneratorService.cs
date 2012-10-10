@@ -11,31 +11,34 @@ namespace Hop.Core.Services
     {
         private static readonly AssemblyBuilderHelper AssemblyBuilder = new AssemblyBuilderHelper("temp.generated.dll");
 
-        #region IGeneratorService Members
+        public IdExtractor<T> CreateIdExtractor<T>()
+        {
+            return new GenericIdExtractor<T>();
+        }
 
         public Materializer<T> CreateMaterializer<T>()
         {
-            Type baseType = typeof (Materializer<T>);
-            Type localType = typeof (T);
+            var baseType = typeof (Materializer<T>);
+            var localType =TypeCache.Get<T>();
             var emptyArgsArray = new Type[] {};
 
-            TypeBuilderHelper typeBuilderHelper = AssemblyBuilder.DefineType(localType.Name + "Materializer", baseType);
+            var typeBuilderHelper = AssemblyBuilder.DefineType(localType.Type.Name + "Materializer", baseType);
 
             //constructor
             typeBuilderHelper.DefaultConstructor.Emitter.ldarg_0.call(baseType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, emptyArgsArray, null)).ret();
 
             //getobject impl
-            MethodBuilderHelper defineMethod = typeBuilderHelper.DefineMethod(baseType.GetMethod("GetObject"));
+            var defineMethod = typeBuilderHelper.DefineMethod(baseType.GetMethod("GetObject"));
 
-            EmitHelper emitter = defineMethod.Emitter;
-            LocalBuilder returnVar = emitter.DeclareLocal(localType);
+            var emitter = defineMethod.Emitter;
+            var returnVar = emitter.DeclareLocal(localType.Type);
 
             //create new T
             emitter
-                .newobj(localType.GetConstructor(emptyArgsArray))
+                .newobj(localType.Type.GetConstructor(emptyArgsArray))
                 .stloc(returnVar);
 
-            foreach (PropertyInfo propertyInfo in localType.GetProperties())
+            foreach (var propertyInfo in localType.Properties)
             {
                 emitter =
                     emitter
@@ -54,18 +57,11 @@ namespace Hop.Core.Services
                 .ldloc_0
                 .ret();
 
-            Type type = typeBuilderHelper.Create();
+            var type = typeBuilderHelper.Create();
 
             AssemblyBuilder.Save();
 
             return (Materializer<T>) Activator.CreateInstance(type);
-        }
-
-        #endregion
-
-        public IdExtractor<T> CreateIdExtractor<T>()
-        {
-            return new GenericIdExtractor<T>();
         }
     }
 }

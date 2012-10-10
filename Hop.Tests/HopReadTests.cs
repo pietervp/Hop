@@ -142,7 +142,7 @@ namespace Hop.Tests
             {
                 var startNew = Stopwatch.StartNew();
 
-                var readObjects = Materialize<Beer>(new SubOptimalMaterializerService());
+                var readObjects = Materialize<Beer>(new ReflectionBasedMaterializerService());
 
                 Debug.WriteLine(startNew.ElapsedMilliseconds);
 

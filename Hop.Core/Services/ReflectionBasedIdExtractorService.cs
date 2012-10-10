@@ -6,12 +6,10 @@ using Hop.Core.Services.Base;
 
 namespace Hop.Core.Services
 {
-    public class IlBasedIdExtractorService : IIdExtractorService
+    public class ReflectionBasedIdExtractorService : IIdExtractorService
     {
         private static readonly Dictionary<Type, IdExtractor> TypeExtractorCache = new Dictionary<Type, IdExtractor>();
         private readonly MsilGeneratorService _msilGeneratorService = new MsilGeneratorService();
-
-        #region IIdExtractorService Members
 
         public IEnumerable<object> GetIds<T>(IEnumerable<T> instances)
         {
@@ -20,40 +18,33 @@ namespace Hop.Core.Services
 
             var extractor = (TypeExtractorCache[typeof (T)] as IdExtractor<T>);
 
-            if (extractor != null)
+            if (extractor == null) 
+                yield break;
+
+            foreach (T instance in instances)
             {
-                foreach (T instance in instances)
-                {
-                    yield return extractor.GetId(instance);
-                }
+                yield return extractor.GetId(instance);
             }
         }
 
-        public IEnumerable<U> GetIds<T, U>(IEnumerable<T> instances)
+        public IEnumerable<TU> GetIds<T, TU>(IEnumerable<T> instances)
         {
-            foreach (object instance in GetIds(instances))
-            {
-                yield return (U) instance;
-            }
+            return GetIds(instances).Select(instance => (TU) instance);
         }
 
         public string GetIdField<T>()
         {
-            return "Id";
+            return HopBase.GetIdPropertyService(typeof(T)).Name;
         }
 
-        public T SetId<T>(T source, object id)
+        public void SetId<T>(T source, object id)
         {
-            source.GetType().GetProperty("Id").SetValue(source, id, null);
-
-            return source;
+            HopBase.GetIdPropertyService(typeof(T)).SetValue(source, id, null);
         }
 
         public object GetId<T>(T instance)
         {
             return GetIds<T, object>(new[] {instance}).FirstOrDefault();
         }
-
-        #endregion
     }
 }

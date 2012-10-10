@@ -5,8 +5,6 @@ namespace Hop.Core
 {
     public class GenericIdExtractor<T> : IdExtractor<T>
     {
-        #region Overrides of IdExtractor<T>
-
         public override object GetId(T instance)
         {
             return GetKeyProperty().GetValue(instance, null);
@@ -16,7 +14,5 @@ namespace Hop.Core
         {
             return TypeCache.Get<T>().IdProperty;
         }
-
-        #endregion
     }
 }

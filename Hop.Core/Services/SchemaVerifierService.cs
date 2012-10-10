@@ -6,17 +6,18 @@ using System.Data.SqlTypes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Hop.Core.Base;
 using Hop.Core.Extensions;
 
 namespace Hop.Core.Services
 {
     public class SchemaVerifierService
     {
-        private static readonly List<Type> cache = new List<Type>();
+        private static readonly List<Type> VerifiedTypesCache = new List<Type>();
 
         public static void AddTypeToCache<T>(IDbConnection connection) where T : new()
         {
-            if (cache.Contains(typeof (T)))
+            if (VerifiedTypesCache.Contains(typeof (T)))
                 return;
 
             var sqlConnection = connection as SqlConnection;
@@ -24,35 +25,54 @@ namespace Hop.Core.Services
             if (sqlConnection == null)
                 return;
 
-            string tableName = HopBase.GetTypeToTableNameService(typeof (T));
+            VerifiedTypesCache.Add(typeof(T));
 
-            SqlCommand sqlCommand = sqlConnection.CreateCommand();
-            sqlCommand.CommandText = string.Format(@"select column_name,ordinal_position from information_schema.columns where table_name = '{0}' order by ordinal_position", tableName);
+            var tableName = HopBase.GetTypeToTableNameService(typeof (T));
 
-            List<Tuple<string, int>> columns = connection.Hop().ReadTuples<Tuple<string, int>, T>("column_name, ordinal_position", "table_name = 'Beer'", "information_schema.columns").ToList();
+            var columns = 
+                connection
+                .Hop()
+                .ReadTuples<Tuple<string, int>, T>("column_name, ordinal_position", string.Format("table_name = '{0}'", tableName), "information_schema.columns")
+                .ToList();
 
-            var sb = new StringBuilder();
-            sb.Append(string.Format("ALTER TABLE  {0} ", HopBase.GetTypeToTableNameService(typeof (T))));
+            var unMatchedProperties = TypeCache.Get<T>().Properties.Where(x => columns.All(y => y.Item1 != x.Name)).ToList();
 
-            List<PropertyInfo> propertyInfos = typeof (T).GetProperties().Where(x => !columns.Any(y => y.Item1 == x.Name)).ToList();
-
-            cache.Add(typeof (T));
-
-            if (!propertyInfos.Any())
+            if (!unMatchedProperties.Any())
                 return;
 
-            foreach (PropertyInfo source in propertyInfos)
+            var sb = new StringBuilder();
+
+            //create table if no column found
+            if(!columns.Any())
             {
-                SqlDbType sqlDbType = GetSqlType(source.PropertyType);
-                sb.Append(string.Format(" ADD {0} {1}", source.Name, sqlDbType.ToString()));
+                var propertyInfo = TypeCache.Get<T>().IdProperty;
+                unMatchedProperties = unMatchedProperties.Where(x => x != TypeCache.Get<T>().IdProperty).ToList();
+                sb.AppendLine(string.Format("CREATE TABLE {0}({1} {2} PRIMARY KEY {3});", tableName, propertyInfo.Name, GetSqlString(GetSqlType(propertyInfo.PropertyType)), propertyInfo.PropertyType == typeof(int) ? "IDENTITY" : string.Empty));
             }
 
-            IDbCommand dbCommand = connection.CreateCommand();
-            dbCommand.CommandText = sb.ToString();
+            foreach (var source in unMatchedProperties)
+            {
+                sb.Append(string.Format("ALTER TABLE  {0} ", tableName));
+                var sqlDbType = GetSqlType(source.PropertyType);
+                sb.AppendLine(string.Format(" ADD {0} {1}", source.Name, GetSqlString(sqlDbType)));
+            }
 
-            connection.Open();
-            dbCommand.ExecuteNonQuery();
-            connection.Close();
+            using (var dbCommand = connection.CreateCommand())
+            {
+                dbCommand.CommandText = sb.ToString();
+
+                connection.Open();
+                dbCommand.ExecuteNonQuery();
+                connection.Close();
+            }
+        }
+
+        private static string GetSqlString(SqlDbType sqlDbType)
+        {
+            if (sqlDbType == SqlDbType.NVarChar)
+                return sqlDbType.ToString() + "(MAX)";
+
+            return sqlDbType.ToString();
         }
 
         public static SqlDbType GetSqlType(Type type)

@@ -58,14 +58,14 @@
     <Compile Include="Base\IHideSig.cs" />
     <Compile Include="Base\IHop.cs" />
     <Compile Include="Services\Base\IIdExtractorService.cs" />
-    <Compile Include="Services\IlBasedIdExtractorService.cs" />
+    <Compile Include="Services\ReflectionBasedIdExtractorService.cs" />
     <Compile Include="Services\IlBasedMaterializerService.cs" />
     <Compile Include="Services\Base\IMaterializerService.cs" />
     <Compile Include="Materializer.cs" />
     <Compile Include="Services\MsilGeneratorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\SchemaVerifierService.cs" />
-    <Compile Include="Services\SubOptimalMaterializerService.cs" />
+    <Compile Include="Services\ReflectionBasedMaterializerService.cs" />
     <Compile Include="Base\TypeCache.cs" />
     <Compile Include="Base\TypeCacheEntry.cs" />
   </ItemGroup>
