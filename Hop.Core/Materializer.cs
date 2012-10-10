@@ -23,7 +23,7 @@ namespace Hop.Core
                 .Range(0, reader.FieldCount)
                 .ToDictionary(reader.GetName, x => x);
 
-            foreach (PropertyInfo notInCache in TypeCache[typeof (T)].Where(x => _cache.All(y => y.Key != x.Name)))
+            foreach (var notInCache in TypeCache[typeof (T)].Where(x => _cache.All(y => y.Key != x.Name)))
             {
                 _cache.Add(notInCache.Name, -1);
             }
@@ -31,7 +31,7 @@ namespace Hop.Core
 
         public TU GetValue<TU>(IDataReader reader, string propertyName, TU currentValue)
         {
-            int index = _cache[propertyName];
+            var index = _cache[propertyName];
 
             if (index == -1)
                 return currentValue;
