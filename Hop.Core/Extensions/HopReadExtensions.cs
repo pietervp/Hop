@@ -35,13 +35,13 @@ namespace Hop.Core.Extensions
 
                 using (var executeReader = dbCommand.ExecuteReader(CommandBehavior.CloseConnection))
                 {
+                	var parameterStubList = Enumerable.Range(0, genericArguments.Count());
+                	
                     while (executeReader.Read())
                     {
-                        var factoryParameters = 
-                            Enumerable
-                            .Range(0, genericArguments.Count())
-                            .Select(x => executeReader.Get(genericArguments[x], x))
-                            .ToArray();
+                        var factoryParameters = parameterStubList
+						                            .Select(x => executeReader.Get(genericArguments[x], x))
+						                            .ToArray();
 
                         yield return tupleCreationFactory.Invoke(null, factoryParameters) as T;
                     }
